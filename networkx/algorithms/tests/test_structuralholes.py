@@ -123,3 +123,16 @@ class TestStructuralHoles(object):
         G.add_node(1)
         effective_size = nx.effective_size(G)
         assert_true(math.isnan(effective_size[1]))
+
+    def test_hierarchy_isolated(self):
+        G = self.G.copy()
+        G.add_node(1)
+        hierarchy = nx.hierarchy(G)
+        assert_true(math.isnan(hierarchy[1]))
+
+    def test_efficiency_isolated(self):
+        G = self.G.copy()
+        G.add_node(1)
+        efficiency = nx.efficiency(G)
+        assert_true(math.isnan(efficiency[1]))
+

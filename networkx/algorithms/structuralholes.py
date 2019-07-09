@@ -56,7 +56,6 @@ def normalized_mutual_weight(G, u, v, norm=sum, weight=None):
                  for w in set(nx.all_neighbors(G, u)))
     return 0 if scale == 0 else mutual_weight(G, u, v, weight) / scale
 
-
 def effective_size(G, nodes=None, weight=None):
     r"""Returns the effective size of all nodes in the graph ``G``.
 
@@ -278,3 +277,121 @@ def local_constraint(G, u, v, weight=None):
     indirect = sum(nmw(G, u, w, weight=weight) * nmw(G, w, v, weight=weight)
                    for w in set(nx.all_neighbors(G, u)))
     return (direct + indirect) ** 2
+
+def hierarchy(G, nodes=None, weight=None):
+    """Returns the hierarchy on all nodes in the graph ``G``.
+    Hierarchy is a form of closure in which a minority of contacts,
+    typically one or two, stand above the others for being more the source of closure.
+
+    Formally, the *hierarchy on v*, denoted `c(v)`,
+    is defined by
+
+    .. math::
+
+       H(v) = \sum_{ j\in N(v) }{(C(v,j)/(C\N))ln(C(v,j)/(C\N))} \Nln(N)
+
+    where `N(v)` is the subset of the neighbors of `v` that are either
+    predecessors or successors of `v` and `c(v, j)` is the local
+    constraint on `v` with respect to the neighbour`j`. For the definition of local
+    constraint, see :func:`local_constraint`.
+
+    Parameters
+    ----------
+    G : NetworkX graph
+        The graph containing ``v``. This can be either directed or undirected.
+
+    nodes : container, optional
+        Container of nodes in the graph ``G`` to compute the hierarchy. If
+        None, the hierarchy of every node is computed. 
+
+    weight : None or string, optional
+      If None, all edge weights are considered equal.
+      Otherwise holds the name of the edge attribute used as weight.
+
+    Returns
+    -------
+    dict
+        Dictionary with nodes as keys and the hierarchy on the node as values.
+
+    See also
+    --------
+    local_constraint
+
+    References
+    ----------
+    .. [1] Burt, Ronald S.
+           "Structural holes and good ideas".
+           American Journal of Sociology (110): 349–399.
+
+    """
+    if nodes is None:
+         nodes = G
+    hierarchy = {}
+    for v in nodes:
+        if len (G[v])== 0:
+            hierarchy[v] == float('nan')
+            continue
+        N = len (G[v])
+        constraint_v = nx.constraint(G,[v])
+        temp = 0
+        for j in G[v]:
+            temp = temp+(nx.local_constraint(G, v, j)/(constraint_v[v]/N))*np.log(nx.local_constraint(G, v, j)/(constraint_v[v]/N))
+        hierarchy[v] = temp/(N*np.log(N))
+    return hierarchy
+
+def efficiency(G, nodes=None, weight=None):
+
+    """Returns the efficiency on all nodes in the graph ``G``.
+    Efficiency is the effective size of the node`v` divided by the number of `v`'s neighbours 
+
+    Formally, the *efficiency on v*, denoted `efficiency(v)`,
+    is defined by
+
+    .. math::
+
+       effciency(v) = effective_size(v)\N(v)
+
+    where `N(v)` is the subset of the neighbors of `v` that are either
+    predecessors or successors of `v`.
+    For the definition of effective size, see :func:`effective_size`.
+
+    Parameters
+    ----------
+    G : NetworkX graph
+        The graph containing ``v``. This can be either directed or undirected.
+
+    nodes : container, optional
+        Container of nodes in the graph ``G`` to compute the efficiency. If
+        None, the efficiency of every node is computed. 
+
+    weight : None or string, optional
+      If None, all edge weights are considered equal.
+      Otherwise holds the name of the edge attribute used as weight.
+
+    Returns
+    -------
+    dict
+        Dictionary with nodes as keys and the hierarchy on the node as values.
+
+    See also
+    --------
+    effective_size
+
+    References
+    ----------
+    .. [1] Burt, Ronald S.
+           "Structural holes and good ideas".
+           American Journal of Sociology (110): 349–399.
+
+    """
+    
+    if nodes is None:
+        nodes = G
+    efficiency = {}
+    for v in nodes:
+        if len (G[v]) == 0:
+            efficiency[v] == float('nan')
+            continue
+        adj_num = len (G[v])
+        efficiency[v] = nx.effective_size(G,[v])[v]/adj_num
+    return efficiency
